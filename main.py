@@ -7,6 +7,9 @@ from model.FourierGNN import FGN
 import time
 import os
 import numpy as np
+
+import sys
+print(sys.path)
 from utils.utils import save_model, load_model, evaluate
 
 # main settings can be seen in markdown file (README.md)
@@ -14,7 +17,7 @@ parser = argparse.ArgumentParser(description='fourier graph network for multivar
 parser.add_argument('--data', type=str, default='ECG', help='data set')
 parser.add_argument('--feature_size', type=int, default='140', help='feature size')
 parser.add_argument('--seq_length', type=int, default=12, help='inout length')
-parser.add_argument('--pre_length', type=int, default=12, help='predict length')
+parser.add_argument('--pre_length', type=int, default=1, help='predict length')
 parser.add_argument('--embed_size', type=int, default=128, help='hidden dimensions')
 parser.add_argument('--hidden_size', type=int, default=256, help='hidden dimensions')
 parser.add_argument('--train_epochs', type=int, default=100, help='train epochs')
@@ -69,7 +72,7 @@ Data = data_dict[args.data]
 train_set = Data(root_path=data_info['root_path'], flag='train', seq_len=args.seq_length, pre_len=args.pre_length, type=data_info['type'], train_ratio=args.train_ratio, val_ratio=args.val_ratio)
 test_set = Data(root_path=data_info['root_path'], flag='test', seq_len=args.seq_length, pre_len=args.pre_length, type=data_info['type'], train_ratio=args.train_ratio, val_ratio=args.val_ratio)
 val_set = Data(root_path=data_info['root_path'], flag='val', seq_len=args.seq_length, pre_len=args.pre_length, type=data_info['type'], train_ratio=args.train_ratio, val_ratio=args.val_ratio)
-
+print()
 train_dataloader = DataLoader(
     train_set,
     batch_size=args.batch_size,
@@ -108,8 +111,8 @@ def validate(model, vali_loader):
     trues = []
     for i, (x, y) in enumerate(vali_loader):
         cnt += 1
-        y = y.float().to("cuda:0")
-        x = x.float().to("cuda:0")
+        y = y.float().to(device)
+        x = x.float().to(device)
         forecast = model(x)
         y = y.permute(0, 2, 1).contiguous()
         loss = forecast_loss(forecast, y)
@@ -135,8 +138,8 @@ def test():
     trues = []
     sne = []
     for index, (x, y) in enumerate(test_dataloader):
-        y = y.float().to("cuda:0")
-        x = x.float().to("cuda:0")
+        y = y.float().to(device)
+        x = x.float().to(device)
         forecast = model(x)
         y = y.permute(0, 2, 1).contiguous()
         forecast = forecast.detach().cpu().numpy()  # .squeeze()
@@ -161,8 +164,8 @@ if __name__ == '__main__':
         cnt = 0
         for index, (x, y) in enumerate(train_dataloader):
             cnt += 1
-            y = y.float().to("cuda:0")
-            x = x.float().to("cuda:0")
+            y = y.float().to(device)
+            x = x.float().to(device)
             forecast = model(x)
             y = y.permute(0, 2, 1).contiguous()
             loss = forecast_loss(forecast, y)

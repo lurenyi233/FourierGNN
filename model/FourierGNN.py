@@ -38,8 +38,10 @@ class FGN(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(self.hidden_size, self.pre_length)
         )
-        self.to('cuda:0')
+        # self.to('cuda:0')
+        # self.to('cpu')
 
+        self.fc1 = nn.Linear(14, 1)
     def tokenEmb(self, x):
         x = x.unsqueeze(2)
         y = self.embeddings
@@ -109,7 +111,7 @@ class FGN(nn.Module):
         z = torch.view_as_complex(z)
         return z
 
-    def forward(self, x):
+    def forward(self, x):  # x: (32,12,141)
         x = x.permute(0, 2, 1).contiguous()
         B, N, L = x.shape
         # B*N*L ==> B*NL
@@ -141,6 +143,7 @@ class FGN(nn.Module):
         x = torch.matmul(x, self.embeddings_10)
         x = x.reshape(B, N, -1)
         x = self.fc(x)
-
-        return x
+        # return x  # original code
+        x = self.fc1(x.squeeze(-1))
+        return x.unsqueeze(-1)
 
